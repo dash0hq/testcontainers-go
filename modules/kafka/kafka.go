@@ -3,14 +3,13 @@ package kafka
 import (
 	"context"
 	"fmt"
-	"math"
-	"strings"
-
 	"github.com/docker/go-connections/nat"
-	"golang.org/x/mod/semver"
-
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
+	"golang.org/x/mod/semver"
+	"math"
+	"strings"
+	"time"
 )
 
 const publicPort = nat.Port("9093/tcp")
@@ -81,6 +80,19 @@ func RunContainer(ctx context.Context, opts ...testcontainers.ContainerCustomize
 
 						port, err := c.MappedPort(ctx, publicPort)
 						if err != nil {
+							// Workaround for https://github.com/testcontainers/testcontainers-go/issues/2543
+							cancelCtx, cancel := context.WithTimeout(ctx, time.Second*30)
+							defer cancel()
+
+							for cancelCtx.Err() == nil {
+								port, err = c.MappedPort(cancelCtx, publicPort)
+								if err != nil {
+									time.Sleep(time.Millisecond * 100)
+									continue
+								}
+								cancel()
+							}
+
 							return err
 						}
 

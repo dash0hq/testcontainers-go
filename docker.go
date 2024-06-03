@@ -179,7 +179,7 @@ func (c *DockerContainer) Inspect(ctx context.Context) (*types.ContainerJSON, er
 
 // MappedPort gets externally mapped port for a container port
 func (c *DockerContainer) MappedPort(ctx context.Context, port nat.Port) (nat.Port, error) {
-	inspect, err := c.Inspect(ctx)
+	inspect, err := c.inspectRawContainer(ctx)
 	if err != nil {
 		return "", err
 	}
